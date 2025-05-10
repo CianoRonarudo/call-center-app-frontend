@@ -1,7 +1,9 @@
 <script setup>
 import VerticalNavSectionTitle from '@/@layouts/components/VerticalNavSectionTitle.vue'
+import { useAuthStore } from '@/stores/auth.store'
 import VerticalNavGroup from '@layouts/components/VerticalNavGroup.vue'
 import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
+const authStore = useAuthStore()
 </script>
 
 <template>
@@ -159,14 +161,14 @@ import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
     }"
   />
 
-  <VerticalNavLink
+  <VerticalNavLink v-if="!authStore.user"
     :item="{
       title: 'Login',
       icon: 'ri-login-box-line',
       to: '/login',
     }"
   />
-  <VerticalNavLink
+  <VerticalNavLink v-if="!authStore.user"
     :item="{
       title: 'Register',
       icon: 'ri-user-add-line',

@@ -1,4 +1,8 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth.store'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
 const iconsList = [
   'ri-arrow-left-up-line',
   'ri-arrow-left-up-fill',
@@ -55,6 +59,16 @@ const iconsList = [
   ' ri-contract-left-fill',
   ' ri-contract-right-line',
 ]
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+onMounted(() => {
+  if (!authStore.isAuthenticated) {
+    router.push('/login')
+  }
+})
+
 </script>
 
 <template>

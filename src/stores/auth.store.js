@@ -7,10 +7,19 @@ export const useAuthStore = defineStore('auth', () => {
     const router = useRouter()
     const notificationStore = useNotificationStore()
     const token = ref(localStorage.getItem('access_token') || null)
-    const user = ref(null)
+    const user = ref(JSON.parse(localStorage.getItem('user')) || null)
     const isLoading = ref(false)
     const isAuthenticated = computed(() => !!token.value)
 
+    const initialize = () => {
+        const storedToken = localStorage.getItem('access_token')
+        const storedUser = localStorage.getItem('user')
+
+        if (storedToken) {
+            token.value = storedToken
+            user.value = storedUser ? JSON.parse(storedUser) : null
+        }
+    }
 
     /**
      * @function login
@@ -90,25 +99,40 @@ export const useAuthStore = defineStore('auth', () => {
         
     }
 
-    const updateUserProfile = async (userId, userData) => {
-        isLoading.value = true
+    /**
+     * @function updateUserProfile
+     * @description Updates the logged in user's profile
+     * @param {FormData} userData The user data to update
+     * @returns {Promise<Object>} The updated user
+     */
+    const updateUserProfile = async (userData) => {
         try {
-            const response = await api.put(`/users/${userId}`, {
-                FirstName: userData.FirstName,
-                LastName: userData.LastName,
-                email: userData.email,
-                Phone: userData.Phone,
-                Address: userData.Address,
-            }, {
+            isLoading.value = true
+            const formData = new FormData()
+
+            if (userData.get('id')) formData.append('id', userData.get('id'))
+            if (userData.get('FirstName')) formData.append('FirstName', userData.get('FirstName'))
+            if (userData.get('LastName')) formData.append('LastName', userData.get('LastName'))
+            if (userData.get('email')) formData.append('email', userData.get('email'))
+            if (userData.get('Phone')) formData.append('Phone', userData.get('Phone'))
+            if (userData.get('Address')) formData.append('Address', userData.get('Address'))
+            
+            if (userData.get('Photo')) {
+                formData.append('Photo', userData.get('Photo'))
+            }
+            const config = {
                 headers: {
-                    Authorization: `bearer ${token.value}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `bearer ${token.value}`,
+                    'Content-Type': 'multipart/form-data'
                 }
-            })
+            }
+
+            const response = await api.put(`/users/${user.value.id}`, formData, config)
 
             user.value = response.data
-            notificationStore.trigger('Profile updated successfully', 'success')
+            localStorage.setItem('user', JSON.stringify(response.data))
 
+            notificationStore.trigger('Login successful', 'success')
             return response.data
         } catch (error) {
             let message = error.response.data.message
@@ -124,8 +148,43 @@ export const useAuthStore = defineStore('auth', () => {
         } finally {
             isLoading.value = false
         }
-        
     }
+
+    const checkAuth = async () => {
+        if (!token.value) return
+
+        if (!user.value?.id) {
+            console.warn('No user data found in auth store')
+            return
+        }
+
+        try {
+            isLoading.value = true
+            const response = await api.get(`/users/${user.value.id}`, {
+                headers: {
+                    Authorization: `bearer ${token.value}`
+                }
+            })
+
+            user.value = response.data
+            localStorage.setItem('user', JSON.stringify(user.value))
+        } catch (error) {
+            let message = error.response.data.message
+            if (error.response) {
+                message = error.response.data.message
+            } else if (error.request) {
+                message = error.request
+            } else {
+                message = error.message
+            }
+            notificationStore.trigger(message, 'error')
+            throw error
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    initialize()
 
     return {
         token,
@@ -135,6 +194,7 @@ export const useAuthStore = defineStore('auth', () => {
         login,
         logout,
         updateUserProfile,
+        checkAuth,
     }
     
 })

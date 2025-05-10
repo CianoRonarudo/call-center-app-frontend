@@ -1,5 +1,11 @@
 <script setup>
-import trophy from '@images/misc/trophy.png'
+import { useAuthStore } from '@/stores/auth.store';
+import trophy from '@images/misc/trophy.png';
+import { computed } from 'vue';
+
+const authStore = useAuthStore()
+
+const userFirstName = computed(() => authStore.user?.FirstName || '')
 </script>
 
 <template>
@@ -7,7 +13,7 @@ import trophy from '@images/misc/trophy.png'
     <VCardText>
       <div class="mb-2">
         <h5 class="text-h5">
-          Congratulations John! <span class="text-high-emphasis">🎉</span>
+          Congratulations {{ userFirstName }}! <span class="text-high-emphasis">🎉</span>
         </h5>
         <div class="text-body-1">
           Best seller of the month

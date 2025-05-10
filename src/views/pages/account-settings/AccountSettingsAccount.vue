@@ -8,7 +8,7 @@
             rounded="lg"
             size="100"
             class="me-6"
-            :image="accountDataLocal.avatarImg"
+            :image="avatarPreview || (authStore.user?.Photo ? authStore.user.Photo : avatar1)"
           />
 
           <!-- 👉 Upload Photo -->
@@ -106,7 +106,7 @@
                 md="6"
               >
                 <VTextField
-                  v-model="userData.Phone"
+                  v-model="userForm.Phone"
                   label="Phone Number"
                   placeholder="+1 (917) 543-9876"
                 />
@@ -129,7 +129,7 @@
                 cols="12"
                 class="d-flex flex-wrap gap-4"
               >
-                <VBtn type="submit">Save changes</VBtn>
+                <VBtn type="submit" :loading="authStore.isLoading">Save changes</VBtn>
 
                 <VBtn
                   color="secondary"
@@ -168,129 +168,117 @@
       </VCard>
     </VCol>
   </VRow>
+  <VSnackbar v-model="notificationStore.show" :color="notificationStore.color">
+    {{ notificationStore.message }}
+  </VSnackbar>
 </template>
 
 <script setup>
 import { useAuthStore } from '@/stores/auth.store'
+import { useNotificationStore } from '@/stores/notification.store'
 import avatar1 from '@images/avatars/avatar-1.png'
+import { onMounted, ref } from 'vue'
 
+const notificationStore = useNotificationStore()
 const authStore = useAuthStore()
+const refInputEl = ref()
+const avatarPreview = ref(null)
+const isAccountDeactivated = ref(false)
 
-const props = defineProps({
-  userData : {
-    type: Object,
-    require : true,
-  }
-})
 
 const userForm = ref({
-  ...props.userData
+  id : '',
+  FirstName : '',
+  LastName : '',
+  email : '',
+  Phone : '',
+  Address: '',
+  Photo: null,
+})
+
+onMounted(() => {
+  if (authStore.user) {
+    userForm.value = {
+      id: authStore.user.id,
+      FirstName: authStore.user.FirstName || '',
+      LastName: authStore.user.LastName || '',
+      email: authStore.user.email || '',
+      Phone: authStore.user.Phone || '',
+      Address: authStore.user.Address || '',
+      Photo: authStore.user.Photo || null,
+    }
+  }
 })
 
 const handleUpdateUser = async () => {
   try {
-    await authStore.updateUserProfile(props.userData.id, userForm.value)
+    const formData = new FormData()
+    formData.append('id', userForm.value.id)
+    formData.append('FirstName', userForm.value.FirstName)
+    formData.append('LastName', userForm.value.LastName)
+    formData.append('email', userForm.value.email)
+    formData.append('Phone', userForm.value.Phone)
+    formData.append('Address', userForm.value.Address)
+
+    if (userForm.value.Photo) {
+      formData.append('Photo', userForm.value.Photo)
+    }
+
+    await authStore.updateUserProfile(formData)
+
+    avatarPreview.value = null
   } catch (error) {
     console.error('Error during login', error)
   }
   
 }
 
-const accountData = {
-  avatarImg: avatar1,
-  firstName: 'john',
-  lastName: 'Doe',
-  email: 'johnDoe@example.com',
-  org: 'ThemeSelection',
-  phone: '+1 (917) 543-9876',
-  address: '123 Main St, New York, NY 10001',
-  state: 'New York',
-  zip: '10001',
-  country: 'USA',
-  language: 'English',
-  timezone: '(GMT-11:00) International Date Line West',
-  currency: 'USD',
-}
 
-const refInputEl = ref()
-const accountDataLocal = ref(structuredClone(accountData))
-const isAccountDeactivated = ref(false)
 
 const resetForm = () => {
-  accountDataLocal.value = structuredClone(accountData)
-}
-
-const changeAvatar = file => {
-  const fileReader = new FileReader()
-  const { files } = file.target
-  if (files && files.length) {
-    fileReader.readAsDataURL(files[0])
-    fileReader.onload = () => {
-      if (typeof fileReader.result === 'string')
-        accountDataLocal.value.avatarImg = fileReader.result
+  if (authStore.user) {
+    userForm.value = {
+      id: authStore.user.id,
+      FirstName: authStore.user.FirstName || '',
+      LastName: authStore.user.LastName || '',
+      email: authStore.user.email || '',
+      Phone: authStore.user.Phone || '',
+      Address: authStore.user.Address || '',
+      Photo: authStore.user.Photo || null,
     }
   }
+  resetAvatar()
 }
+
+const changeAvatar = (event) => {
+  const file = event.target.files[0]
+
+  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif']
+  if(!validTypes.includes(file.type)) {
+    notificationStore.trigger('Please select a valid image file', 'error')
+    return
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    notificationStore.trigger('Please select a file less than 5MB', 'error')
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    avatarPreview.value = e.target.result
+  }
+  reader.readAsDataURL(file)
+  userForm.value.Photo = file
+}
+
 
 // reset avatar image
 const resetAvatar = () => {
-  accountDataLocal.value.avatarImg = accountData.avatarImg
+  avatarPreview.value = null
+  userForm.value.Photo = null
+  refInputEl.value.value = ''
 }
 
-const timezones = [
-  '(GMT-11:00) International Date Line West',
-  '(GMT-11:00) Midway Island',
-  '(GMT-10:00) Hawaii',
-  '(GMT-09:00) Alaska',
-  '(GMT-08:00) Pacific Time (US & Canada)',
-  '(GMT-08:00) Tijuana',
-  '(GMT-07:00) Arizona',
-  '(GMT-07:00) Chihuahua',
-  '(GMT-07:00) La Paz',
-  '(GMT-07:00) Mazatlan',
-  '(GMT-07:00) Mountain Time (US & Canada)',
-  '(GMT-06:00) Central America',
-  '(GMT-06:00) Central Time (US & Canada)',
-  '(GMT-06:00) Guadalajara',
-  '(GMT-06:00) Mexico City',
-  '(GMT-06:00) Monterrey',
-  '(GMT-06:00) Saskatchewan',
-  '(GMT-05:00) Bogota',
-  '(GMT-05:00) Eastern Time (US & Canada)',
-  '(GMT-05:00) Indiana (East)',
-  '(GMT-05:00) Lima',
-  '(GMT-05:00) Quito',
-  '(GMT-04:00) Atlantic Time (Canada)',
-  '(GMT-04:00) Caracas',
-  '(GMT-04:00) La Paz',
-  '(GMT-04:00) Santiago',
-  '(GMT-03:30) Newfoundland',
-  '(GMT-03:00) Brasilia',
-  '(GMT-03:00) Buenos Aires',
-  '(GMT-03:00) Georgetown',
-  '(GMT-03:00) Greenland',
-  '(GMT-02:00) Mid-Atlantic',
-  '(GMT-01:00) Azores',
-  '(GMT-01:00) Cape Verde Is.',
-  '(GMT+00:00) Casablanca',
-  '(GMT+00:00) Dublin',
-  '(GMT+00:00) Edinburgh',
-  '(GMT+00:00) Lisbon',
-  '(GMT+00:00) London',
-]
 
-const currencies = [
-  'USD',
-  'EUR',
-  'GBP',
-  'AUD',
-  'BRL',
-  'CAD',
-  'CNY',
-  'CZK',
-  'DKK',
-  'HKD',
-  'HUF',
-  'INR',
-]
 </script>

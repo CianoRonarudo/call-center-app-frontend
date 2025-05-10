@@ -44,9 +44,9 @@
             </template>
 
             <VListItemTitle class="font-weight-semibold">
-              John Doe
+              {{ user.FirstName }} {{ user.LastName }}
             </VListItemTitle>
-            <VListItemSubtitle>Admin</VListItemSubtitle>
+            <VListItemSubtitle>{{ user.profileType }}</VListItemSubtitle>
           </VListItem>
           <VDivider class="my-2" />
 
@@ -129,6 +129,8 @@ import { useAuthStore } from '@/stores/auth.store'
 import avatar1 from '@images/avatars/avatar-1.png'
 
 const authStore = useAuthStore()
+
+const user = computed(() => authStore.user)
 
 const handleLogout = async () => {
   try {

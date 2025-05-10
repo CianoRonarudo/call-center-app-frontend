@@ -1,10 +1,15 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth.store'
+
 const isCurrentPasswordVisible = ref(false)
 const isNewPasswordVisible = ref(false)
 const isConfirmPasswordVisible = ref(false)
 const currentPassword = ref('12345678')
 const newPassword = ref('87654321')
 const confirmPassword = ref('87654321')
+const authStore = useAuthStore()
+
+console.log('authStore', authStore.user)
 
 const passwordRequirements = [
   'Minimum 8 characters long - the more, the better',

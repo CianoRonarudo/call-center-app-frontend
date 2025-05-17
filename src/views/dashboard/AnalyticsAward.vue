@@ -1,19 +1,9 @@
-<script setup>
-import { useAuthStore } from '@/stores/auth.store';
-import trophy from '@images/misc/trophy.png';
-import { computed } from 'vue';
-
-const authStore = useAuthStore()
-
-const userFirstName = computed(() => authStore.user?.FirstName || '')
-</script>
-
 <template>
   <VCard class="position-relative">
     <VCardText>
       <div class="mb-2">
         <h5 class="text-h5">
-          Congratulations {{ userFirstName }}! <span class="text-high-emphasis">🎉</span>
+          Congratulations {{ user?.FirstName }}! <span class="text-high-emphasis">🎉</span>
         </h5>
         <div class="text-body-1">
           Best seller of the month
@@ -37,6 +27,17 @@ const userFirstName = computed(() => authStore.user?.FirstName || '')
     />
   </VCard>
 </template>
+
+<script setup>
+import { useAuthStore } from '@/stores/auth.store';
+import trophy from '@images/misc/trophy.png';
+
+const authStore = useAuthStore()
+
+const user = storeToRefs(authStore).user
+
+
+</script>
 
 <style lang="scss">
 .v-card .trophy {

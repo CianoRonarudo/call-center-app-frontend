@@ -12,7 +12,7 @@
           />
 
           <!-- 👉 Upload Photo -->
-          <form class="d-flex flex-column justify-center gap-5">
+          <form class="d-flex flex-column justify-center gap-5" @submit.prevent="ChangeProfilePhoto">
             <div class="d-flex flex-wrap gap-2">
               <VBtn
                 color="primary"
@@ -51,7 +51,10 @@
             <p class="text-body-1 mb-0">
               Allowed JPG, GIF or PNG. Max size of 800K
             </p>
-          </form>
+            <VBtn type="submit" :isLoading="isLoading">
+              Change profil photo
+            </VBtn>
+          </form> 
         </VCardText>
 
         <VDivider />
@@ -184,6 +187,7 @@ const authStore = useAuthStore()
 const refInputEl = ref()
 const avatarPreview = ref(null)
 const isAccountDeactivated = ref(false)
+const uploadedFile = ref(null)
 
 
 const userForm = ref({
@@ -210,27 +214,63 @@ onMounted(() => {
   }
 })
 
+// const handleUpdateUser = async () => {
+//   try {
+
+
+
+//     await authStore.updateUserProfile(formData)
+
+
+//   } catch (error) {
+//     console.error('Error during login', error)
+//   }
+
+// }
+
 const handleUpdateUser = async () => {
   try {
-    const formData = new FormData()
-    formData.append('id', userForm.value.id)
-    formData.append('FirstName', userForm.value.FirstName)
-    formData.append('LastName', userForm.value.LastName)
-    formData.append('email', userForm.value.email)
-    formData.append('Phone', userForm.value.Phone)
-    formData.append('Address', userForm.value.Address)
-
-    if (userForm.value.Photo) {
-      formData.append('Photo', userForm.value.Photo)
+    if (!authStore.user) {
+      notificationStore.trigger('User not found', 'error')
+      return
+    }
+    const updatedFields = {}
+    for (const key in userForm.value) {
+      if (userForm.value[key] !== authStore.user[key] && key !== 'email') {
+        updatedFields[key] = userForm.value[key]
+      }
     }
 
-    await authStore.updateUserProfile(formData)
+    if (Object.keys(updatedFields).length === 0) {
+      notificationStore.trigger('No changes detected', 'info')
+      return
+    }
 
-    avatarPreview.value = null
+    updatedFields.id = authStore.user.id
+
+    console.log(updatedFields)
+    await authStore.updateUserProfile(updatedFields)
+    notificationStore.trigger('Profile updated successfully', 'success')
+
   } catch (error) {
+    notificationStore.trigger('Error updating profile', 'error')
+    console.error('Error updating profile', error)
+  }
+
+}
+
+const ChangeProfilePhoto = async () => {
+  try {
+    if (uploadedFile.value) {
+      await authStore.updateUserProfilePhoto(uploadedFile.value)
+    }
+    else {
+      notificationStore.trigger('Please select a valid image file', 'error')
+    }
+  } catch (error) {
+    notificationStore.trigger('Error during login', 'error')
     console.error('Error during login', error)
   }
-  
 }
 
 
@@ -252,7 +292,6 @@ const resetForm = () => {
 
 const changeAvatar = (event) => {
   const file = event.target.files[0]
-
   const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif']
   if(!validTypes.includes(file.type)) {
     notificationStore.trigger('Please select a valid image file', 'error')
@@ -268,9 +307,11 @@ const changeAvatar = (event) => {
   reader.onload = (e) => {
     avatarPreview.value = e.target.result
   }
-  reader.readAsDataURL(file)
-  userForm.value.Photo = file
+  reader.readAsDataURL(file) 
+  uploadedFile.value = file
 }
+
+
 
 
 // reset avatar image

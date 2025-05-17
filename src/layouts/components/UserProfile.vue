@@ -12,7 +12,7 @@
       color="primary"
       variant="tonal"
     >
-      <VImg :src="avatar1" />
+      <VImg :src="user?.Photo || avatar1" />
 
       <!-- SECTION Menu -->
       <VMenu
@@ -37,16 +37,16 @@
                     color="primary"
                     variant="tonal"
                   >
-                    <VImg :src="avatar1" />
+                    <VImg :src="authStore.user?.Photo ? authStore.user.Photo : avatar1" />
                   </VAvatar>
                 </VBadge>
               </VListItemAction>
             </template>
 
             <VListItemTitle class="font-weight-semibold">
-              {{ user.FirstName }} {{ user.LastName }}
+              {{ user?.FirstName }} {{ user?.LastName }}
             </VListItemTitle>
-            <VListItemSubtitle>{{ user.profileType }}</VListItemSubtitle>
+            <VListItemSubtitle>{{ user?.profileType }}</VListItemSubtitle>
           </VListItem>
           <VDivider class="my-2" />
 
@@ -127,10 +127,12 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth.store'
 import avatar1 from '@images/avatars/avatar-1.png'
+import { storeToRefs } from 'pinia'
 
 const authStore = useAuthStore()
 
-const user = computed(() => authStore.user)
+
+const user = storeToRefs(authStore).user
 
 const handleLogout = async () => {
   try {

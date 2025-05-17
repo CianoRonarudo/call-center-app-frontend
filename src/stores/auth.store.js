@@ -108,31 +108,34 @@ export const useAuthStore = defineStore('auth', () => {
     const updateUserProfile = async (userData) => {
         try {
             isLoading.value = true
-            const formData = new FormData()
-
-            if (userData.get('id')) formData.append('id', userData.get('id'))
-            if (userData.get('FirstName')) formData.append('FirstName', userData.get('FirstName'))
-            if (userData.get('LastName')) formData.append('LastName', userData.get('LastName'))
-            if (userData.get('email')) formData.append('email', userData.get('email'))
-            if (userData.get('Phone')) formData.append('Phone', userData.get('Phone'))
-            if (userData.get('Address')) formData.append('Address', userData.get('Address'))
-            
-            if (userData.get('Photo')) {
-                formData.append('Photo', userData.get('Photo'))
-            }
+        
             const config = {
                 headers: {
-                    'Authorization': `bearer ${token.value}`,
-                    'Content-Type': 'multipart/form-data'
+                    Authorization: `bearer ${token.value}`,
                 }
             }
 
-            const response = await api.put(`/users/${user.value.id}`, formData, config)
+            const response = await api.put(`/users/${user.value.id}`, {
+                FirstName: userData.FirstName,
+                LastName: userData.LastName,
+                Email: userData.Email,
+                Phone: userData.Phone,
+                Address: userData.Address,
+            }, config)
+            
+            console.log('user avant update', user.value)
+            user.value = { ...user.value, ...response.data }
+            
+            console.log('user le retour de la fonction update', user.value)
 
-            user.value = response.data
-            localStorage.setItem('user', JSON.stringify(response.data))
+            localStorage.setItem('user', JSON.stringify(user.value))
 
+            console.log('user apres update', user.value)
+            
             notificationStore.trigger('Login successful', 'success')
+
+            console.log('response', response.data)
+
             return response.data
         } catch (error) {
             let message = error.response.data.message
@@ -143,7 +146,44 @@ export const useAuthStore = defineStore('auth', () => {
             } else {
                 message = error.message
             }
+            
             notificationStore.trigger(message, 'error')
+            
+            console.log('error', error)
+
+            throw error
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    const updateUserProfilePhoto = async (photo) => {
+        try {
+            isLoading.value = true
+            const formData = new FormData()
+            formData.append('Photo', photo)
+            const config = {
+                headers: {
+                    Authorization: `bearer ${token.value}`,
+                }
+            }
+
+            const response = await api.put(`/users/${user.value.id}`, formData, config)
+
+            Object.assign(user.value, response.data)
+            refreshUser()
+            localStorage.setItem('user', JSON.stringify(user.value))
+
+            notificationStore.trigger('Update successful', 'success')
+            
+            return response.data
+        } catch (error) {
+            let message = error.response?.data?.message || error.message
+            
+            notificationStore.trigger(message, 'error')
+            
+            console.log('error', error)
+
             throw error
         } finally {
             isLoading.value = false
@@ -184,6 +224,35 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    const refreshUser = async () => {
+        try {
+            const response = await api.get(`/users/${user.value.id}`, {
+                headers: {
+                    Authorization: `bearer ${token.value}`
+                }
+            })
+            user.value = response.data
+            console.log('User refreshed', user.value)
+        }
+        catch (error) {
+            console.error('Error refreshing user data:', error)
+        }
+    }
+
+    const getUserData = async () => {
+        try {
+            const response = await api.get(`/users/${user.value.id}`, {
+                headers: {
+                    Authorization: `bearer ${token.value}`
+                }
+            })
+            return response.data
+        }
+        catch (error) {
+            console.error('Error getting user data:', error)
+        }
+    }
+
     initialize()
 
     return {
@@ -193,8 +262,11 @@ export const useAuthStore = defineStore('auth', () => {
         isAuthenticated,
         login,
         logout,
-        updateUserProfile,
         checkAuth,
+        updateUserProfilePhoto,
+        updateUserProfile,
+        getUserData,
+        refreshUser
     }
     
 })

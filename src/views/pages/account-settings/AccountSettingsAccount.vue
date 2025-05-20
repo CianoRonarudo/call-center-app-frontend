@@ -51,7 +51,7 @@
             <p class="text-body-1 mb-0">
               Allowed JPG, GIF or PNG. Max size of 800K
             </p>
-            <VBtn type="submit" :isLoading="isLoading">
+            <VBtn type="submit" :loading="authStore.isLoading">
               Change profil photo
             </VBtn>
           </form> 

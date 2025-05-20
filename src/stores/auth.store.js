@@ -45,15 +45,10 @@ export const useAuthStore = defineStore('auth', () => {
             return response.data
             
         } catch (error) {
-            let message = error.response.data.message
-            if (error.response) {
-                message = error.response.data.message
-            } else if (error.request) {
-                message = error.request
-            } else {
-                message = error.message
-            }
+            let message = error.response?.data?.message || error.message
+            
             notificationStore.trigger(message, 'error')
+            
             throw error
         } finally {
             isLoading.value = false
@@ -74,15 +69,10 @@ export const useAuthStore = defineStore('auth', () => {
             })
         }
         catch (error) {
-            let message = error.response.data.message
-            if (error.response) {
-                message = error.response.data.message
-            } else if (error.request) {
-                message = error.request
-            } else {
-                message = error.message
-            }
+            let message = error.response?.data?.message || error.message
+            
             notificationStore.trigger(message, 'error')
+            
             throw error
         } finally {
             token.value = null
@@ -138,19 +128,10 @@ export const useAuthStore = defineStore('auth', () => {
 
             return response.data
         } catch (error) {
-            let message = error.response.data.message
-            if (error.response) {
-                message = error.response.data.message
-            } else if (error.request) {
-                message = error.request
-            } else {
-                message = error.message
-            }
+            let message = error.response?.data?.message || error.message
             
             notificationStore.trigger(message, 'error')
             
-            console.log('error', error)
-
             throw error
         } finally {
             isLoading.value = false
@@ -172,6 +153,7 @@ export const useAuthStore = defineStore('auth', () => {
 
             Object.assign(user.value, response.data)
             refreshUser()
+            console.log('user', user.value)
             localStorage.setItem('user', JSON.stringify(user.value))
 
             notificationStore.trigger('Update successful', 'success')
@@ -209,15 +191,10 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = response.data
             localStorage.setItem('user', JSON.stringify(user.value))
         } catch (error) {
-            let message = error.response.data.message
-            if (error.response) {
-                message = error.response.data.message
-            } else if (error.request) {
-                message = error.request
-            } else {
-                message = error.message
-            }
+            let message = error.response?.data?.message || error.message
+            
             notificationStore.trigger(message, 'error')
+            
             throw error
         } finally {
             isLoading.value = false
@@ -253,6 +230,26 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    const requestPasswordReset = async (email) => {
+        isLoading.value = true
+        try {
+            const response = await api.post('/users/reset-password', { "email": email}, {
+                headers: {
+                    Authorization: `bearer ${token.value}`
+                }
+            })
+            return response.data
+        } catch (error) {
+            let message = error.response?.data?.message || error.message
+            
+            notificationStore.trigger(message, 'error')
+            
+            throw error
+        } finally {
+            isLoading.value = false
+        }
+    }
+
     initialize()
 
     return {
@@ -266,7 +263,8 @@ export const useAuthStore = defineStore('auth', () => {
         updateUserProfilePhoto,
         updateUserProfile,
         getUserData,
-        refreshUser
+        refreshUser,
+        requestPasswordReset,
     }
     
 })

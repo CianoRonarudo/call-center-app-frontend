@@ -29,87 +29,32 @@
           Welcome to Materio! 👋🏻
         </h4>
         <p class="mb-0">
-          Please sign-in to your account and start the adventure
+          Reset your password here. 
         </p>
       </VCardText>
 
       <VCardText>
-        <VForm @submit.prevent="handleLogin">
+        <VForm @submit.prevent="handleResetPassword">
           <VRow>
             <!-- email -->
             <VCol cols="12">
               <VTextField
-                v-model="form.email"
                 label="Email"
                 type="email"
+                v-model="form.email"
               />
             </VCol>
 
             <!-- password -->
             <VCol cols="12">
-              <VTextField
-                v-model="form.password"
-                label="Password"
-                placeholder="············"
-                :type="isPasswordVisible ? 'text' : 'password'"
-                autocomplete="password"
-                :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'"
-                @click:append-inner="isPasswordVisible = !isPasswordVisible"
-              />
-
-              <!-- remember me checkbox -->
-              <div class="d-flex align-center justify-space-between flex-wrap my-6">
-                <VCheckbox
-                  v-model="form.remember"
-                  label="Remember me"
-                />
-
-                <router-link
-                to="/reset-password"
-                >
-                  Forgot Password?
-                </router-link>
-              </div>
-
               <!-- login button -->
               <VBtn
                 block
                 type="submit"
                 :loading="authStore.isLoading"
               >
-                Login
+                Send
               </VBtn>
-            </VCol>
-
-            <!-- create account -->
-            <VCol
-              cols="12"
-              class="text-center text-base"
-            >
-              <span>New on our platform?</span>
-              <RouterLink
-                class="text-primary ms-2"
-                to="/register"
-              >
-                Create an account
-              </RouterLink>
-            </VCol>
-
-            <VCol
-              cols="12"
-              class="d-flex align-center"
-            >
-              <VDivider />
-              <span class="mx-4">or</span>
-              <VDivider />
-            </VCol>
-
-            <!-- auth providers -->
-            <VCol
-              cols="12"
-              class="text-center"
-            >
-              <AuthProvider />
             </VCol>
           </VRow>
         </VForm>
@@ -140,7 +85,6 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth.store'
 import { useNotificationStore } from '@/stores/notification.store'
-import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import logo from '@images/logo.svg?raw'
 import authV1MaskDark from '@images/pages/auth-v1-mask-dark.png'
 import authV1MaskLight from '@images/pages/auth-v1-mask-light.png'
@@ -154,26 +98,21 @@ const notificationStore = useNotificationStore()
 
 const form = ref({
   email: '',
-  password: '',
-  remember: false,
 })
+
+const handleResetPassword = async () => {
+  try {
+    await authStore.requestPasswordReset(form.value.email)
+  } catch (error) {
+    console.error('Error during login', error)
+  }
+}
 
 const vuetifyTheme = useTheme()
 
 const authThemeMask = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
 })
-
-const isPasswordVisible = ref(false)
-
-const handleLogin = async () => {
-  // console.log('form', form.value)
-  try {
-    await authStore.login(form.value)
-  } catch (error) {
-    console.error('Error during login', error)
-  }
-}
 
 </script>
 

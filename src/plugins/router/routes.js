@@ -33,6 +33,14 @@ export const routes = [
         path: 'form-layouts',
         component: () => import('@/pages/form-layouts.vue'),
       },
+      {
+        path: 'add-products',
+        component: () => import('@/views/pages/users/add-products.vue'),
+      },
+      {
+        path: 'edit-products',
+        component: () => import('@/views/pages/users/edit-products.vue'),
+      },
     ],
   },
   {
@@ -43,6 +51,11 @@ export const routes = [
       {
         path: 'login',
         component: () => import('@/pages/login.vue'),
+        meta: {forGuests: true},
+      },
+      {
+        path: 'reset-password',
+        component: () => import('@/pages/reset-password.vue'),
         meta: {forGuests: true},
       },
       {
